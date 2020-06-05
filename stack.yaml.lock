@@ -71,17 +71,6 @@ packages:
       sha256: a281dfb96666844490e27d497fb3e468d935eae143376815318d0d36f6b4fc16
   original:
     hackage: barbies-th-0.1.2
-- completed:
-    size: 8423
-    url: https://github.com/gergoerdi/clashilator/archive/16373f805ad4006f629701bdfd1c37906d0f667b.tar.gz
-    name: clashilator
-    version: 0.1.0
-    sha256: ea0367df224536930abedcf1211317335c259bb51fbf3340c211b6a4f8b8b714
-    pantry-tree:
-      size: 881
-      sha256: d5b66a562c40bc7c104ed0aafe6d2a48383badd830b5e49673399035ef924d1b
-  original:
-    url: https://github.com/gergoerdi/clashilator/archive/16373f805ad4006f629701bdfd1c37906d0f667b.tar.gz
 snapshots:
 - completed:
     size: 492027
