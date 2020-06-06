@@ -24,6 +24,24 @@ topEntity = withEnableGen vga
     ptr = regEn 0 frameEnd $ ptr + 1
     write = packWrite <$> ptr <*> pure (Just 1)
 
+frameBuffer
+    :: forall w h a. (KnownNat w, KnownNat h, 1 <= (w * h), NFDataX a)
+    => forall dom. (HiddenClockResetEnable dom)
+    => a
+    -> Signal dom (Maybe (Index (w * h), a))
+    -> Signal dom (Maybe (Index w))
+    -> Signal dom (Maybe (Index h))
+    -> Signal dom a
+frameBuffer initial write x y = current
+  where
+    lineEnd = isFalling False (isJust <$> x)
+
+    rowstride = snatToNum (SNat @w)
+    base = regEn 0 lineEnd $ mux (isNothing <$> y) 0 (base + rowstride)
+    address = base + (maybe 0 fromIntegral <$> x)
+
+    current = blockRam1 ClearOnReset (SNat @(w * h)) initial address write
+
 video
     :: (HiddenClockResetEnable Dom25)
     => Signal Dom25 (Maybe (Index (640 * 480), Bit))
@@ -31,15 +49,8 @@ video
 video write = (frameEnd, vgaOut vgaSync rgb)
   where
     VGADriver{..} = vgaDriver vga640x480at60
-    rgb = monochrome <$> current
-
     frameEnd = isFalling False (isJust <$> vgaY)
-    lineEnd = isFalling False (isJust <$> vgaX)
-
-    base = regEn 0 lineEnd $ mux (isNothing <$> vgaY) 0 (base + 640)
-    address = base + (maybe 0 fromIntegral <$> vgaX)
-
-    current = blockRam1 ClearOnReset (SNat @(640 * 480)) 0 address write
+    rgb = monochrome <$> frameBuffer 0 write vgaX vgaY
 
 monochrome :: (Bounded a) => Bit -> a
 monochrome 0 = minBound
