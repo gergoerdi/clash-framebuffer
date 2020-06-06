@@ -60,7 +60,12 @@ video write = (frameEnd, vgaOut vgaSync rgb)
     vgaX' = scale (SNat @3) . center @600 $ vgaX
     vgaY' = scale (SNat @3) . center @420 $ vgaY
 
-    rgb = maybe (255, 0, 0) monochrome <$> frameBuffer 0 write vgaX' vgaY'
+    rgb = maybe <$> grid <*> pure monochrome <*> frameBuffer 0 write vgaX' vgaY'
+
+    grid = mux parity red green
+    parity = (maybe 0 lsb <$> vgaX) .==. (maybe 0 lsb <$> vgaY)
+    red = pure (255, 0, 0)
+    green = pure (0, 255, 0)
 
 monochrome :: (Bounded a) => Bit -> a
 monochrome 0 = minBound
