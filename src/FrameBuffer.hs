@@ -34,13 +34,17 @@ frameBuffer
     -> Signal dom (Maybe a)
 frameBuffer initial write x y = enable (isJust <$> x .&&. isJust <$> y) current
   where
-    lineEnd = isFalling False (isJust <$> x)
-    prevY = regEn Nothing lineEnd y
-    newLine = lineEnd .&&. y ./=. prevY
+    prevY = register Nothing y
+    newLine = y ./=. prevY
 
     rowstride = snatToNum (SNat @w)
-    base = regEn 0 newLine $ mux (isNothing <$> y) 0 (base + rowstride)
-    address = base + (maybe 0 fromIntegral <$> x)
+
+    base = register 0 base'
+    base' = mux (not <$> newLine) base $
+            mux (isNothing <$> prevY) 0 $
+            base + rowstride
+
+    address = base' + (maybe 0 fromIntegral <$> x)
 
     current = blockRam1 ClearOnReset (SNat @(w * h)) initial address write
 
