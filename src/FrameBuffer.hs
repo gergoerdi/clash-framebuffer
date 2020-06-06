@@ -31,13 +31,15 @@ frameBuffer
     -> Signal dom (Maybe (Index (w * h), a))
     -> Signal dom (Maybe (Index w))
     -> Signal dom (Maybe (Index h))
-    -> Signal dom a
-frameBuffer initial write x y = current
+    -> Signal dom (Maybe a)
+frameBuffer initial write x y = enable (isJust <$> x .&&. isJust <$> y) current
   where
     lineEnd = isFalling False (isJust <$> x)
+    prevY = regEn Nothing lineEnd y
+    newLine = lineEnd .&&. y ./=. prevY
 
     rowstride = snatToNum (SNat @w)
-    base = regEn 0 lineEnd $ mux (isNothing <$> y) 0 (base + rowstride)
+    base = regEn 0 newLine $ mux (isNothing <$> y) 0 (base + rowstride)
     address = base + (maybe 0 fromIntegral <$> x)
 
     current = blockRam1 ClearOnReset (SNat @(w * h)) initial address write
@@ -50,7 +52,8 @@ video write = (frameEnd, vgaOut vgaSync rgb)
   where
     VGADriver{..} = vgaDriver vga640x480at60
     frameEnd = isFalling False (isJust <$> vgaY)
-    rgb = monochrome <$> frameBuffer 0 write vgaX vgaY
+
+    rgb = maybe (255, 0, 0) monochrome <$> frameBuffer 0 write vgaX vgaY
 
 monochrome :: (Bounded a) => Bit -> a
 monochrome 0 = minBound
