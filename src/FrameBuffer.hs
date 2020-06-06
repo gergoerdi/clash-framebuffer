@@ -50,14 +50,17 @@ frameBuffer initial write x y = enable (isJust <$> x .&&. isJust <$> y) current
 
 video
     :: (HiddenClockResetEnable Dom25)
-    => Signal Dom25 (Maybe (Index (640 * 480), Bit))
+    => Signal Dom25 (Maybe (Index (320 * 200), Bit))
     -> (Signal Dom25 Bool, VGAOut Dom25 8 8 8)
 video write = (frameEnd, vgaOut vgaSync rgb)
   where
     VGADriver{..} = vgaDriver vga640x480at60
     frameEnd = isFalling False (isJust <$> vgaY)
 
-    rgb = maybe (255, 0, 0) monochrome <$> frameBuffer 0 write vgaX vgaY
+    vgaX' = scale (SNat @2) $ vgaX
+    vgaY' = scale (SNat @2) . center @400 $ vgaY
+
+    rgb = maybe (255, 0, 0) monochrome <$> frameBuffer 0 write vgaX' vgaY'
 
 monochrome :: (Bounded a) => Bit -> a
 monochrome 0 = minBound
