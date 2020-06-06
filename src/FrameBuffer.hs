@@ -32,8 +32,10 @@ frameBuffer
     -> Signal dom (Maybe (Index w))
     -> Signal dom (Maybe (Index h))
     -> Signal dom (Maybe a)
-frameBuffer initial write x y = enable (isJust <$> x .&&. isJust <$> y) current
+frameBuffer initial write x y = enable (delay False visible) current
   where
+    visible = isJust <$> x .&&. isJust <$> y
+
     prevY = register Nothing y
     newLine = y ./=. prevY
 
@@ -52,7 +54,7 @@ video
     :: (HiddenClockResetEnable Dom25)
     => Signal Dom25 (Maybe (Index (200 * 140), Bit))
     -> (Signal Dom25 Bool, VGAOut Dom25 8 8 8)
-video write = (frameEnd, vgaOut vgaSync rgb)
+video write = (frameEnd, vgaOut (delaySync vgaSync) rgb)
   where
     VGADriver{..} = vgaDriver vga640x480at60
     frameEnd = isFalling False (isJust <$> vgaY)
@@ -66,6 +68,13 @@ video write = (frameEnd, vgaOut vgaSync rgb)
     parity = (maybe 0 lsb <$> vgaX) .==. (maybe 0 lsb <$> vgaY)
     red = pure (255, 0, 0)
     green = pure (0, 255, 0)
+
+delaySync :: (HiddenClockResetEnable dom) => VGASync dom -> VGASync dom
+delaySync VGASync{..} = VGASync
+    { vgaHSync = register undefined vgaHSync
+    , vgaVSync = register undefined vgaVSync
+    , vgaDE = register False vgaDE
+    }
 
 monochrome :: (Bounded a) => Bit -> a
 monochrome 0 = minBound
