@@ -51,12 +51,12 @@ packages:
   original:
     hackage: concurrent-supply-0.1.8
 - completed:
-    hackage: shake-0.18.2@sha256:0d6a5df63fe1a5c0a6d75ee86e36306cce8306f790ac8c1f791d65757ff62101,14806
+    hackage: shake-0.19.1@sha256:eda22a199c78a45bebfb0b5506aa757ca6cc6d92931c1551ef5aa5b4e45cddd2,15340
     pantry-tree:
-      size: 11991
-      sha256: c65170e2f7c3369dbd487a7ab7e1a3542dbc943f05eacca12950001e3414ebfb
+      size: 12139
+      sha256: 2f01533eeb9a18822c809420cb9f96cc5e65a74f3b1d2155b071a3c0a3940685
   original:
-    hackage: shake-0.18.2
+    hackage: shake-0.19.1
 - completed:
     hackage: barbies-2.0.1.0@sha256:289c0ab2a8477dc09d70653f437b7b83caa8969cc007c866bc52606121cce3c1,4407
     pantry-tree:

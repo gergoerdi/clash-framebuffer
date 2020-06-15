@@ -1,5 +1,4 @@
 {-# LANGUAGE NumericUnderscores, RecordWildCards #-}
-{-# LANGUAGE ApplicativeDo #-}
 module FrameBuffer where
 
 import Clash.Prelude
