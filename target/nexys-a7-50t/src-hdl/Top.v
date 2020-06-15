@@ -31,10 +31,6 @@ module Top(
    topEntity u_topEntity
      (.CLK_25MHZ(CLK_25MHZ),
       .RESET(!CLK_LOCKED),
-      .BTN_UP(BTNU),
-      .BTN_DOWN(BTND),
-      .BTN_LEFT(BTNL),
-      .BTN_RIGHT(BTNR),
       .VGA_HSYNC(VGA_HS),
       .VGA_VSYNC(VGA_VS),
       .VGA_RED(VGA_RED_FULL),
