@@ -33,9 +33,12 @@ main = clashShake clashProject $ do
     ClashProject{..} <- ask
     let synDir = buildDir </> clashDir
 
-    kit@ClashKit{..} <- clashRules Verilog "src" $ return ()
+    kit@ClashKit{..} <- clashRules Verilog "src" $ do
+        need [ buildDir </> "seabios8x8.rom" ]
+
     -- xilinxISE kit papilioPro "target/papilio-pro" "papilio-pro"
     -- xilinxISE kit papilioOne "target/papilio-one" "papilio-one"
     xilinxVivado kit nexysA750T "target/nexys-a7-50t" "nexys-a7-50t"
 
-    return ()
+    lift $ do
+      buildDir </> "seabios8x8.rom" %> binImage (Just $ 256 * 8) "seabios8x8.bin"
