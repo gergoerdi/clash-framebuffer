@@ -23,7 +23,7 @@ topEntity = withEnableGen vga
     (frameEnd, vga) = video write
 
     frameEnd' = riseEvery (SNat @10_000)
-    ptr = regEn 0 frameEnd' $ satAdd SatWrap 73 <$> ptr
+    ptr = regEn 0 frameEnd' $ satAdd SatWrap 1 <$> ptr
     char = regEn 0 frameEnd' $ char + 1
     write = packWrite <$> ptr <*> (Just <$> char)
 
@@ -58,31 +58,39 @@ frameBuffer initial write x y = enable (delayI False visible) current
 
 video
     :: (HiddenClockResetEnable Dom25)
-    => Signal Dom25 (Maybe (Index (80 * 60), Unsigned 8))
+    => Signal Dom25 (Maybe (Index (40 * 25), Unsigned 8))
     -> (Signal Dom25 Bool, VGAOut Dom25 8 8 8)
 video write = (matchDelay rgb False frameEnd, delayVGA vgaSync rgb)
   where
     VGADriver{..} = vgaDriver vga640x480at60
     frameEnd = isFalling False (isJust <$> vgaY)
 
+    vgaX' = scale (SNat @2) vgaX
+    vgaY' = scale (SNat @2) . center @400 $ vgaY
+
     rgb = maybe <$> delayI undefined grid <*> pure monochrome <*> fontPixel
 
-    textX = fmap (fromIntegral @_ @(Index 80) . (`shiftR` 3)) <$> vgaX
-    textY = fmap (fromIntegral @_ @(Index 60) . (`shiftR` 3)) <$> vgaY
+    textX = fmap (fromIntegral @_ @(Index 40) . (`shiftR` 3)) <$> vgaX'
+    textY = fmap (fromIntegral @_ @(Index 25) . (`shiftR` 3)) <$> vgaY'
 
-    fontX = delayI undefined $ fromSignal $ fmap (fromIntegral @_ @(Unsigned 3)) <$> vgaX
-    fontY = delayI undefined $ fromSignal $ fmap (fromIntegral @_ @(Unsigned 3)) <$> vgaY
+    fontX0 = fmap (fromIntegral @_ @(Unsigned 3)) <$> vgaX'
+
+    fontX = delayI undefined $ fromSignal fontX0
+    fontY = delayI undefined $ fromSignal $ fmap (fromIntegral @_ @(Unsigned 3)) <$> vgaY'
 
     char = frameBuffer (0 :: Unsigned 8) write textX textY
     fontAddr = do
         char <- char
         fontY <- fontY
         pure $ bitCoerce @(Unsigned 8, Unsigned 3) <$> ((,) <$> char <*> fontY)
-    fontRow = delayedRom (romFilePow2 @11 @8 "seabios8x8.rom") (fromMaybe 0 <$> fontAddr)
-    fontPixel = do
-        fontRow <- fontRow
-        fontX <- fontX
-        pure $ ((fontRow !) . (7 -)) <$> fontX
+    fontLoad = delayedRom (romFilePow2 @11 @8 "seabios8x8.rom") (fromMaybe 0 <$> fontAddr)
+
+    fontRow = register (0 :: BitVector 8) $
+              mux (textX ./=. register Nothing textX) (toSignal fontLoad) $
+              mux (fontX0 ./=. register Nothing fontX0) ((`shiftL` 1) <$> fontRow) $
+              fontRow
+
+    fontPixel = enable (isJust <$> fontX .&&. isJust <$> fontY) $ fromSignal $ msb <$> fontRow
 
     grid = fromSignal $ mux parity red green
     parity = (maybe 0 lsb <$> vgaX) .==. (maybe 0 lsb <$> vgaY)
@@ -94,7 +102,7 @@ video write = (matchDelay rgb False frameEnd, delayVGA vgaSync rgb)
 -- monochrome 1 = maxBound
 
 monochrome :: Bit -> (Unsigned 8, Unsigned 8, Unsigned 8)
-monochrome 0 = (0x00, 0x00, 0x00)
+monochrome 0 = (0x40, 0x40, 0x40)
 monochrome 1 = (0x20, 0xf0, 0x20)
 
 makeTopEntity 'topEntity
