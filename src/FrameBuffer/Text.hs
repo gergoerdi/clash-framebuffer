@@ -18,14 +18,17 @@ topEntity
     :: "CLK_25MHZ" ::: Clock Dom25
     -> "RESET" ::: Reset Dom25
     -> "VGA" ::: VGAOut Dom25 8 8 8
-topEntity = withEnableGen vga
-  where
-    (frameEnd, vga) = video write
+topEntity = withEnableGen $ let
+    board = vga
+      where
+        (frameEnd, vga) = video write
 
-    frameEnd' = riseEvery (SNat @100_000)
-    ptr = regEn 0 frameEnd' $ satAdd SatWrap 23 <$> ptr
-    char = regEn 0 frameEnd' $ char + 1
-    write = packWrite <$> ptr <*> (Just <$> char)
+        frameEnd' = riseEvery @Dom25 (SNat @100_000)
+        ptr = regEn (0 :: Index (15 * 10)) frameEnd' $ satAdd SatWrap 23 <$> ptr
+        char = regEn (0 :: Unsigned 8) frameEnd' $ char + 1
+        write = packWrite <$> ptr <*> (Just <$> char)
+
+    in board
 
 frameBuffer
     :: forall w h a. (KnownNat w, KnownNat h, 1 <= (w * h), NFDataX a)
@@ -59,7 +62,7 @@ video
     -> (Signal Dom25 Bool, VGAOut Dom25 8 8 8)
 video write = (matchDelay rgb False frameEnd, delayVGA vgaSync rgb)
   where
-    VGADriver{..} = vgaDriver vga640x480at60
+    VGADriver{..} = vgaDriver @Dom25 vga640x480at60
     frameEnd = isFalling False (isJust <$> vgaY)
 
     vgaX' = scale (SNat @5) . center @600 $ vgaX
@@ -88,10 +91,10 @@ video write = (matchDelay rgb False frameEnd, delayVGA vgaSync rgb)
     fontPixel = enable (delayI False . fromSignal $ isJust <$> cellX .&&. isJust <$> cellY) $
         msb <$> row
 
-    grid = fromSignal $ mux parity red green
+    grid = fromSignal $ mux parity (pure red) (pure green)
     parity = (maybe 0 lsb <$> vgaX) .==. (maybe 0 lsb <$> vgaY)
-    red = pure (255, 0, 0)
-    green = pure (0, 255, 0)
+    red = (0xff, 0x00, 0x00) :: (Unsigned 8, Unsigned 8, Unsigned 8)
+    green = (0x00, 0xff5, 0x00) :: (Unsigned 8, Unsigned 8, Unsigned 8)
 
 monochrome :: Bit -> (Unsigned 8, Unsigned 8, Unsigned 8)
 monochrome 0 = (0x40, 0x40, 0x40)

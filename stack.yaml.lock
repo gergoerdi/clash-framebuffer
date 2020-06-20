@@ -5,44 +5,44 @@
 
 packages:
 - completed:
-    size: 1373823
+    size: 1480660
     subdir: clash-ghc
-    url: https://github.com/clash-lang/clash-compiler/archive/f7794f6710295bb72f9bd75a68a7dc51de5e30e3.tar.gz
+    url: https://github.com/clash-lang/clash-compiler/archive/e1d880102ce1b2cd2b262ce0d20927382f539976.tar.gz
     name: clash-ghc
     version: 1.3.0
-    sha256: 3f7411ba008384fd5ef762b34cdbfe8f8b0a3a3dab61a93b1de394a4727caa83
+    sha256: 126662e6f7825bb1dc87969cf108b59115830e350c51d0966336ea1a28df3f8c
     pantry-tree:
-      size: 2842
-      sha256: 8ecefb9fe6456e07fe26596b632e1b6c4f5930a552d74ef40c215890613974cc
+      size: 3353
+      sha256: 6e3ff701869c7b73a9efbd38856b67fe71cf1ef3a46d2a95c27e245f1a003ae5
   original:
     subdir: clash-ghc
-    url: https://github.com/clash-lang/clash-compiler/archive/f7794f6710295bb72f9bd75a68a7dc51de5e30e3.tar.gz
+    url: https://github.com/clash-lang/clash-compiler/archive/e1d880102ce1b2cd2b262ce0d20927382f539976.tar.gz
 - completed:
-    size: 1373823
+    size: 1480660
     subdir: clash-prelude
-    url: https://github.com/clash-lang/clash-compiler/archive/f7794f6710295bb72f9bd75a68a7dc51de5e30e3.tar.gz
+    url: https://github.com/clash-lang/clash-compiler/archive/e1d880102ce1b2cd2b262ce0d20927382f539976.tar.gz
     name: clash-prelude
     version: 1.3.0
-    sha256: 3f7411ba008384fd5ef762b34cdbfe8f8b0a3a3dab61a93b1de394a4727caa83
+    sha256: 126662e6f7825bb1dc87969cf108b59115830e350c51d0966336ea1a28df3f8c
     pantry-tree:
       size: 12800
-      sha256: 8c7c4912b63de59ffba62c1e5e5a3491a3040395eb1ec3ab8b1b083df7cfa1c2
+      sha256: a38296fb9801025fb0504804d55cd08c875298a933ffeaf0bdd37a1b29debbe0
   original:
     subdir: clash-prelude
-    url: https://github.com/clash-lang/clash-compiler/archive/f7794f6710295bb72f9bd75a68a7dc51de5e30e3.tar.gz
+    url: https://github.com/clash-lang/clash-compiler/archive/e1d880102ce1b2cd2b262ce0d20927382f539976.tar.gz
 - completed:
-    size: 1373823
+    size: 1480660
     subdir: clash-lib
-    url: https://github.com/clash-lang/clash-compiler/archive/f7794f6710295bb72f9bd75a68a7dc51de5e30e3.tar.gz
+    url: https://github.com/clash-lang/clash-compiler/archive/e1d880102ce1b2cd2b262ce0d20927382f539976.tar.gz
     name: clash-lib
     version: 1.3.0
-    sha256: 3f7411ba008384fd5ef762b34cdbfe8f8b0a3a3dab61a93b1de394a4727caa83
+    sha256: 126662e6f7825bb1dc87969cf108b59115830e350c51d0966336ea1a28df3f8c
     pantry-tree:
-      size: 16625
-      sha256: 3c4b79a4ebd644469a042e9efd7eb1b4b14683e654a8742bfd19c0a0b951b1cd
+      size: 16851
+      sha256: be6bffb8b1bcef5a6946a5439b04a3ea24a0a640b7db27c3fcf8273e4e4a35f8
   original:
     subdir: clash-lib
-    url: https://github.com/clash-lang/clash-compiler/archive/f7794f6710295bb72f9bd75a68a7dc51de5e30e3.tar.gz
+    url: https://github.com/clash-lang/clash-compiler/archive/e1d880102ce1b2cd2b262ce0d20927382f539976.tar.gz
 - completed:
     hackage: concurrent-supply-0.1.8@sha256:9373f4868ad28936a7b93781b214ef4afdeacf377ef4ac729583073491c9f9fb,1627
     pantry-tree:

@@ -17,12 +17,12 @@ topEntity
     :: "CLK_25MHZ" ::: Clock Dom25
     -> "RESET" ::: Reset Dom25
     -> "VGA" ::: VGAOut Dom25 8 8 8
-topEntity = withEnableGen vga
-  where
-    (frameEnd, vga) = video write
+topEntity = withEnableGen $
+    let (frameEnd, vga) = video write
 
-    ptr = regEn 0 frameEnd $ ptr + 1
-    write = packWrite <$> ptr <*> pure (Just 1)
+        ptr = regEn 0 frameEnd $ ptr + 1
+        write = packWrite <$> ptr <*> pure (Just 1)
+    in vga
 
 frameBuffer
     :: forall w h a. (KnownNat w, KnownNat h, 1 <= (w * h), NFDataX a)
@@ -56,7 +56,7 @@ video
     -> (Signal Dom25 Bool, VGAOut Dom25 8 8 8)
 video write = (matchDelay rgb False frameEnd, delayVGA vgaSync rgb)
   where
-    VGADriver{..} = vgaDriver vga640x480at60
+    VGADriver{..} = vgaDriver @Dom25 vga640x480at60
     frameEnd = isFalling False (isJust <$> vgaY)
 
     vgaX' = scale (SNat @3) . center @600 $ vgaX
@@ -65,10 +65,14 @@ video write = (matchDelay rgb False frameEnd, delayVGA vgaSync rgb)
     rgb = maybe <$> delayI undefined grid <*> pure monochrome <*>
           frameBuffer 0 write vgaX' vgaY'
 
-    grid = fromSignal $ mux parity red green
+    grid = fromSignal $ mux parity (pure red) (pure green)
     parity = (maybe 0 lsb <$> vgaX) .==. (maybe 0 lsb <$> vgaY)
-    red = pure (255, 0, 0)
-    green = pure (0, 255, 0)
+
+    red :: (Unsigned 8, Unsigned 8, Unsigned 8)
+    red = (255, 0, 0)
+
+    green :: (Unsigned 8, Unsigned 8, Unsigned 8)
+    green = (0, 255, 0)
 
 monochrome :: (Bounded a) => Bit -> a
 monochrome 0 = minBound
