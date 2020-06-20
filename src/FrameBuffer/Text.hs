@@ -22,13 +22,10 @@ topEntity = withEnableGen vga
   where
     (frameEnd, vga) = video write
 
-    frameEnd' = riseEvery (SNat @10_000)
-    ptr = regEn 0 frameEnd' $ satAdd SatWrap 1 <$> ptr
+    frameEnd' = riseEvery (SNat @100_000)
+    ptr = regEn 0 frameEnd' $ satAdd SatWrap 23 <$> ptr
     char = regEn 0 frameEnd' $ char + 1
     write = packWrite <$> ptr <*> (Just <$> char)
-
-    -- ptr = regEn 0 frameEnd' $ ptr + 1
-    -- char = regEn 0 frameEnd' $ char + 1
 
 frameBuffer
     :: forall w h a. (KnownNat w, KnownNat h, 1 <= (w * h), NFDataX a)
@@ -58,48 +55,43 @@ frameBuffer initial write x y = enable (delayI False visible) current
 
 video
     :: (HiddenClockResetEnable Dom25)
-    => Signal Dom25 (Maybe (Index (40 * 25), Unsigned 8))
+    => Signal Dom25 (Maybe (Index (15 * 10), Unsigned 8))
     -> (Signal Dom25 Bool, VGAOut Dom25 8 8 8)
 video write = (matchDelay rgb False frameEnd, delayVGA vgaSync rgb)
   where
     VGADriver{..} = vgaDriver vga640x480at60
     frameEnd = isFalling False (isJust <$> vgaY)
 
-    vgaX' = scale (SNat @2) vgaX
-    vgaY' = scale (SNat @2) . center @400 $ vgaY
+    vgaX' = scale (SNat @5) . center @600 $ vgaX
+    vgaY' = scale (SNat @5) . center @400 $ vgaY
 
     rgb = maybe <$> delayI undefined grid <*> pure monochrome <*> fontPixel
 
-    textX = fmap (fromIntegral @_ @(Index 40) . (`shiftR` 3)) <$> vgaX'
-    textY = fmap (fromIntegral @_ @(Index 25) . (`shiftR` 3)) <$> vgaY'
+    cellX = fmap (fromIntegral @_ @(Index 15) . (`shiftR` 3)) <$> vgaX'
+    cellY = fmap (fromIntegral @_ @(Index 10) . (`shiftR` 3)) <$> vgaY'
 
-    fontX0 = fmap (fromIntegral @_ @(Unsigned 3)) <$> vgaX'
+    glyphX = fmap (fromIntegral @_ @(Unsigned 3)) <$> vgaX'
+    glyphY = fmap (fromIntegral @_ @(Unsigned 3)) <$> vgaY'
 
-    fontX = delayI undefined $ fromSignal fontX0
-    fontY = delayI undefined $ fromSignal $ fmap (fromIntegral @_ @(Unsigned 3)) <$> vgaY'
+    newCell = cellX ./=. register Nothing cellX
+    newPixel = glyphX ./=. register Nothing glyphX
 
-    char = frameBuffer (0 :: Unsigned 8) write textX textY
-    fontAddr = do
-        char <- char
-        fontY <- fontY
-        pure $ bitCoerce @(Unsigned 8, Unsigned 3) <$> ((,) <$> char <*> fontY)
-    fontLoad = delayedRom (romFilePow2 @11 @8 "seabios8x8.rom") (fromMaybe 0 <$> fontAddr)
+    char = frameBuffer (0 :: Unsigned 8) write cellX cellY
+    fontAddr = maybe 0 bitCoerce <$> (liftA2 (,) <$> char <*> (delayI Nothing $ fromSignal glyphY))
+    loadRow = delayedRom (romFilePow2 @11 @8 "seabios8x8.rom") fontAddr
 
-    fontRow = register (0 :: BitVector 8) $
-              mux (textX ./=. register Nothing textX) (toSignal fontLoad) $
-              mux (fontX0 ./=. register Nothing fontX0) ((`shiftL` 1) <$> fontRow) $
-              fontRow
+    row = unsafeFromSignal @_ @_ @3 . register (0 :: BitVector 8) . toSignal $
+        mux (delayI False . fromSignal $ newCell) loadRow $
+        mux (delayI False . fromSignal $ newPixel) ((`shiftL` 1) <$> antiDelay d1 row) $
+        antiDelay d1 row
 
-    fontPixel = enable (isJust <$> fontX .&&. isJust <$> fontY) $ fromSignal $ msb <$> fontRow
+    fontPixel = enable (delayI False . fromSignal $ isJust <$> cellX .&&. isJust <$> cellY) $
+        msb <$> row
 
     grid = fromSignal $ mux parity red green
     parity = (maybe 0 lsb <$> vgaX) .==. (maybe 0 lsb <$> vgaY)
     red = pure (255, 0, 0)
     green = pure (0, 255, 0)
-
--- monochrome :: (Bounded a) => Bit -> a
--- monochrome 0 = minBound
--- monochrome 1 = maxBound
 
 monochrome :: Bit -> (Unsigned 8, Unsigned 8, Unsigned 8)
 monochrome 0 = (0x40, 0x40, 0x40)
